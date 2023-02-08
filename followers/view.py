@@ -127,6 +127,7 @@ class View:
 
         delay_time = int(delay_time)
 
+        # Spawn and run processes
         rem_users: list[str] = self.scheduler.spawn(workers, message, delay_time, no_of_follows, users)
         
         if len(rem_users) > 0:
