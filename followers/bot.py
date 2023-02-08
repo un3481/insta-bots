@@ -23,6 +23,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 ###########################################################################################################################################################
 
 chrome_options = Options()
+chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-notifications")
 chrome_options.add_argument("--disable-popup-blocking")
 chrome_options.add_argument("--disable-gpu")
