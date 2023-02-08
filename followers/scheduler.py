@@ -25,7 +25,6 @@ def log(queue: Queue, proc: str, text: str):
 ###########################################################################################################################################################
 
 def log_fun(file_path: str, queue: Queue):
-
     # Read from the queue; this spawns as a separate Process
     while True:
         # Read from the queue and check if it is ended
@@ -38,14 +37,37 @@ def log_fun(file_path: str, queue: Queue):
 
 ###########################################################################################################################################################
 
+def remover_fun(queue: Queue):
+    # Read from the queue; this spawns as a separate Process
+    while True:
+        # Read from the queue and check if it is ended
+        entry: tuple[str, str] = None
+        try: entry = queue.get(block=True)
+        except Exception: break
+        
+        try:
+            file_path, user = entry
+            with open(file_path, "r") as f:
+                lines = f.readlines()
+            with open(file_path, "w") as f:
+                for line in lines:
+                    if line.strip("\n") != user:
+                        f.write(line)
+            f.close()
+        except Exception: pass
+
+###########################################################################################################################################################
+
 def worker_fun(
     param: WorkerParam,
     message: str,
     delay_time: int,
     no_of_follows: int,
+    users_file_path: str,
     queue: Queue,
     log_queue: Queue,
-    err_queue: Queue
+    err_queue: Queue,
+    remover_queue: Queue
 ):
 
     _log = lambda text: log(log_queue, param['username'], text)
@@ -102,12 +124,16 @@ def worker_fun(
         _log(follow_msg)
         _log("-" * 100)
         
-        if follow_ok: message_count += 1
+        is_private = (not follow_ok) and follow_msg == "User is private. Not able to send message."
         
-        if (not follow_ok) and follow_msg == "User is private. Not able to send message.":
-            time.sleep(2)
-        else:
-            time.sleep(delay_time * 60)
+        if follow_ok:
+            message_count += 1
+        
+        if follow_ok or is_private:
+            remover_queue.put((users_file_path, user))
+        
+        # Wait for determined delay
+        time.sleep(delay_time * 60)
 
     _log("Sent DMs to {} users.".format(message_count))
 
@@ -129,6 +155,11 @@ class BotScheduler:
         self.err_proc = Process(target=log_fun, args=("followers.err", self.err_queue))
         self.err_proc.daemon = True
         self.err_proc.start()
+        # Init remover worker
+        self.remover_queue = Queue()
+        self.remover_proc = Process(target=remover_fun, args=((self.remover_queue),))
+        self.remover_proc.daemon = True
+        self.remover_proc.start()
         # Init queues
         self.queue = Queue()
         self.processes: list[Process] = []
@@ -157,7 +188,7 @@ class BotScheduler:
 
     ###########################################################################################################################################################
 
-    def spawn(self, workers: list[WorkerParam], message: str, delay_time: int, no_of_follows: int, users: list[str]):
+    def spawn(self, workers: list[WorkerParam], message: str, delay_time: int, no_of_follows: int, users_file_path: str, users: list[str]):
         
         _log = lambda text: log(self.log_queue, "_", text)
 
@@ -178,9 +209,11 @@ class BotScheduler:
                     message,
                     delay_time,
                     no_of_follows,
+                    users_file_path,
                     self.queue,
                     self.log_queue,
-                    self.err_queue
+                    self.err_queue,
+                    self.remover_queue
                 )
             )
             process.daemon = True
