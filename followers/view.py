@@ -3,20 +3,33 @@ import os
 import re
 import threading
 import tkinter as tkr
-from tkinter import filedialog
-from tkinter import END
-from tkinter.ttk import *
-
+from tkinter import ttk, filedialog, END
 from PIL import ImageTk, Image
 
 from .scheduler import BotScheduler
 
 ###########################################################################################################################################################
 
-class View:
-    
-    def __init__(self):
-        self.scheduler = BotScheduler()
+class InstagramBot(tkr.Frame):
+
+    def __init__(self, master: tkr.Tk, scheduler: BotScheduler):
+        super().__init__(master)
+        self.master = master
+        self.scheduler = scheduler
+        
+    ###########################################################################################################################################################
+
+    def start_bot_thread(self):
+        
+        self.start_btn.config(state=tkr.DISABLED)
+        self.message_file_browse_btn.config(state=tkr.DISABLED)
+        self.users_file_browse_btn.config(state=tkr.DISABLED)
+
+        thread = threading.Thread(target=self.start_bot)
+        thread.daemon = True
+        thread.start()
+        
+        return thread
 
     ###########################################################################################################################################################
 
@@ -43,8 +56,8 @@ class View:
             
             self.stop_btn.config(state=tkr.NORMAL)
             self.start_btn.config(state=tkr.NORMAL)
-            self.accounts_file_brows_btn.config(state=tkr.NORMAL)
-            self.msg_brows_btn.config(state=tkr.NORMAL)
+            self.accounts_file_browse_btn.config(state=tkr.NORMAL)
+            self.message_file_browse_btn.config(state=tkr.NORMAL)
 
             self.accounts_file_entry.focus()
             
@@ -65,8 +78,8 @@ class View:
             
             self.stop_btn.config(state=tkr.NORMAL)
             self.start_btn.config(state=tkr.NORMAL)
-            self.accounts_file_brows_btn.config(state=tkr.NORMAL)
-            self.msg_brows_btn.config(state=tkr.NORMAL)
+            self.accounts_file_browse_btn.config(state=tkr.NORMAL)
+            self.message_file_browse_btn.config(state=tkr.NORMAL)
 
             self.accounts_file_entry.focus()
             
@@ -86,29 +99,29 @@ class View:
             
             self.stop_btn.config(state=tkr.NORMAL)
             self.start_btn.config(state=tkr.NORMAL)
-            self.msg_brows_btn.config(state=tkr.NORMAL)
+            self.message_file_browse_btn.config(state=tkr.NORMAL)
 
             self.message_file_entry.focus()
             
             return False
 
         # get number of comments per post to be made by each account
-        no_of_follows = self.no_of_follow_entry.get()
+        max_follows = self.max_follow_entry.get()
         
-        if no_of_follows.__len__() == 0:
+        if max_follows.__len__() == 0:
             
             tkr.messagebox.showerror("Error", "Please Enter No. of Follow to Follow People.")
             
             self.stop_btn.config(state=tkr.NORMAL)
             self.start_btn.config(state=tkr.NORMAL)
-            self.msg_brows_btn.config(state=tkr.NORMAL)
+            self.message_file_browse_btn.config(state=tkr.NORMAL)
 
-            self.no_of_follow_entry.focus()
+            self.max_follow_entry.focus()
             
             return False
 
         # no_of_users_follow_and_send_message_by_one_account
-        no_of_follows = int(no_of_follows)
+        max_follows = int(max_follows)
 
         # get delay time
         delay_time = self.delay_entry.get()
@@ -119,7 +132,7 @@ class View:
             
             self.stop_btn.config(state=tkr.NORMAL)
             self.start_btn.config(state=tkr.NORMAL)
-            self.msg_brows_btn.config(state=tkr.NORMAL)
+            self.message_file_browse_btn.config(state=tkr.NORMAL)
 
             self.delay_entry.focus()
             
@@ -128,7 +141,7 @@ class View:
         delay_time = int(delay_time)
 
         # Spawn and run processes
-        rem_users: list[str] = self.scheduler.spawn(workers, message, delay_time, no_of_follows, users_file_path, users)
+        rem_users: list[str] = self.scheduler.spawn(workers, message, delay_time, max_follows, users_file_path, users)
         
         if len(rem_users) > 0:
             print("Could not Follow and send DMs to {} users".format(len(rem_users)))
@@ -143,27 +156,15 @@ class View:
         self.accounts_file_entry.delete(0, tkr.END)
         self.users_file_entry.delete(0, tkr.END)
         self.message_file_entry.delete(0, tkr.END)
-        self.no_of_follow_entry.delete(0, tkr.END)
+        self.max_follow_entry.delete(0, tkr.END)
         self.delay_entry.delete(0, tkr.END)
 
         self.stop_btn.config(state=tkr.NORMAL)
         self.start_btn.config(state=tkr.NORMAL)
-        self.msg_brows_btn.config(state=tkr.NORMAL)
-        self.users_file_brows_btn.config(state=tkr.NORMAL)
+        self.message_file_browse_btn.config(state=tkr.NORMAL)
+        self.users_file_browse_btn.config(state=tkr.NORMAL)
         
         return True
-
-    ###########################################################################################################################################################
-
-    def start_bot_thread(self):
-        
-        self.start_btn.config(state=tkr.DISABLED)
-        self.msg_brows_btn.config(state=tkr.DISABLED)
-        self.users_file_brows_btn.config(state=tkr.DISABLED)
-
-        thread = threading.Thread(target=self.start_bot)
-        thread.daemon = True
-        thread.start()
 
     ###########################################################################################################################################################
 
@@ -178,13 +179,13 @@ class View:
         self.accounts_file_entry.delete(0, tkr.END)
         self.users_file_entry.delete(0, tkr.END)
         self.message_file_entry.delete(0, tkr.END)
-        self.no_of_follow_entry.delete(0, tkr.END)
+        self.max_follow_entry.delete(0, tkr.END)
         self.delay_entry.delete(0, tkr.END)
 
         self.stop_btn.config(state=tkr.NORMAL)
         self.start_btn.config(state=tkr.NORMAL)
-        self.msg_brows_btn.config(state=tkr.NORMAL)
-        self.users_file_brows_btn.config(state=tkr.NORMAL)
+        self.message_file_browse_btn.config(state=tkr.NORMAL)
+        self.users_file_browse_btn.config(state=tkr.NORMAL)
 
     ###########################################################################################################################################################
 
@@ -208,8 +209,8 @@ class View:
                 return True
             else:
                 tkr.messagebox.showinfo('Error Message', 'Please Enter Only Numeric Value (e.g. 5, 10, 15 etc)')
-                self.no_of_follow_entry.delete(0, END)
-                self.no_of_follow_entry.focus()
+                self.max_follow_entry.delete(0, END)
+                self.max_follow_entry.focus()
                 return False
 
     ###########################################################################################################################################################
@@ -248,91 +249,101 @@ class View:
     ###########################################################################################################################################################
 
     def render(self):
-
-        self.window = tkr.Tk()
-
-        # add padding of 88px to the left of the window
-        self.window.grid_columnconfigure(0, minsize=88)
-
-        # add padding of 88px to the right of the window
-        self.window.grid_columnconfigure(0, minsize=88)
-
-        # add padding of 88px to the top of the window
-        self.window.grid_rowconfigure(0, minsize=88)
-
-        self.window.geometry('640x560')
-        # self.window.iconbitmap(os.path.join(os.getcwd(), 'assets', 'insta_icon.ico'))
-        self.window.resizable(False, False)
-        self.window.title("Insta-Bot")
-        mycolor = '#%02x%02x%02x' % (68, 68, 68)
-
-        vcmd_1 = (self.window.register(self.validate_max_follow_entry), '%P')
-        vcmd_2 = (self.window.register(self.validate_delay_entry), '%P')
-
+        # add padding of 88px to the right, left and top of the window
+        self.master.grid_columnconfigure(0, minsize=88)
+        self.master.grid_columnconfigure(0, minsize=88)
+        self.master.grid_rowconfigure(0, minsize=88)
+        # Set window Title
+        self.master.title("Instagram Bot")
+        # Set Geometry
+        self.master.geometry('640x560')
+        self.master.resizable(False, False)
+        
+        # self.master.iconbitmap(os.path.join(os.getcwd(), 'assets', 'insta_icon.ico'))
         image_path = Image.open(os.path.join(os.getcwd(), 'assets', 'insta_logo.png'))
         img = ImageTk.PhotoImage(image_path)
 
-        # img_label = Label(window, image=img)
-        self.img_label = Label(self.window, image=img, width=10)
+        mycolor = '#%02x%02x%02x' % (68, 68, 68)
+
+        vcmd_1 = (self.master.register(self.validate_max_follow_entry), '%P')
+        vcmd_2 = (self.master.register(self.validate_delay_entry), '%P')
+
+        # self.img_label = ttk.Label(self.master, image=img)
+        self.img_label = ttk.Label(self.master, image=img, width=10)
         self.img_label.grid(column=1, row=0, columnspan=3, padx=80, pady=5, sticky='w')
-        Label(text="").grid(row=1, column=0, sticky="w")
+        
+        self.label_1 = ttk.Label(text="")
+        self.label_1.grid(row=1, column=0, sticky="w")
 
-        tkr.Label(self.window, text="*Accounts Text File : ").grid(column=0, row=3, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
+        # Bot Accounts File Input
+        self.accounts_file_label = tkr.Label(self.master, text="*Accounts Text File : ")
+        self.accounts_file_label.grid(column=0, row=3, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
 
-        self.accounts_file_entry = tkr.Entry(self.window, bd=4, width=42, relief="groove")
+        self.accounts_file_entry = tkr.Entry(self.master, bd=4, width=42, relief="groove")
         self.accounts_file_entry.grid(column=1, row=3, padx=5, pady=5, ipady=3, sticky="w")
 
-        self.accounts_file_brows_btn = tkr.Button(self.window, text="Browse", command=self.select_accounts_file_location, bg='#567', fg='White')
-        self.accounts_file_brows_btn.grid(column=2, row=3, padx=5, pady=5, ipadx=15, ipady=3)
+        self.accounts_file_browse_btn = tkr.Button(self.master, text="Browse", command=self.select_accounts_file_location, bg='#567', fg='White')
+        self.accounts_file_browse_btn.grid(column=2, row=3, padx=5, pady=5, ipadx=15, ipady=3)
 
-        tkr.Label(self.window, text="*Text file containing credentials.", fg='red').grid(row=4, column=1)
+        self.accounts_file_help = tkr.Label(self.master, text="*Text file containing credentials.", fg='red')
+        self.accounts_file_help.grid(row=4, column=1)
 
-        tkr.Label(self.window, text="*Users Text File : ").grid(column=0, row=5, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
+        # Scraped Users File Input
+        self.users_file_label = tkr.Label(self.master, text="*Users Text File : ")
+        self.users_file_label.grid(column=0, row=5, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
         
-        self.users_file_entry = tkr.Entry(self.window, bd=4, width=42, relief="groove")
+        self.users_file_entry = tkr.Entry(self.master, bd=4, width=42, relief="groove")
         self.users_file_entry.grid(column=1, row=5, padx=5, pady=5, ipady=3, sticky="w")
         
-        self.users_file_brows_btn = tkr.Button(self.window, text="Browse", command=self.select_users_file_location, bg='#567', fg='White')
-        self.users_file_brows_btn.grid(column=2, row=5, padx=5, pady=5, ipadx=15, ipady=3)
+        self.users_file_browse_btn = tkr.Button(self.master, text="Browse", command=self.select_users_file_location, bg='#567', fg='White')
+        self.users_file_browse_btn.grid(column=2, row=5, padx=5, pady=5, ipadx=15, ipady=3)
         
-        tkr.Label(self.window, text="*Text file containing scraped usernames.", fg='red').grid(row=6, column=1)
+        self.users_file_help = tkr.Label(self.master, text="*Text file containing scraped usernames.", fg='red')
+        self.users_file_help.grid(row=6, column=1)
 
-        tkr.Label(self.window, text="Message file : ").grid(column=0, row=9, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
+        # Message File Input
+        self.message_file_label = tkr.Label(self.master, text="Message file : ")
+        self.message_file_label.grid(column=0, row=9, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
         
-        self.message_file_entry = tkr.Entry(self.window, bd=4, width=42, relief="groove")
+        self.message_file_entry = tkr.Entry(self.master, bd=4, width=42, relief="groove")
         self.message_file_entry.grid(column=1, row=9, padx=5, pady=5, ipady=3, sticky="w")
         
-        self.msg_brows_btn = tkr.Button(self.window, text="Browse", command=self.select_message_file_location, bg='#567', fg='White')
-        self.msg_brows_btn.grid(column=2, row=9, padx=5, pady=5, ipadx=15, ipady=3)
+        self.message_file_browse_btn = tkr.Button(self.master, text="Browse", command=self.select_message_file_location, bg='#567', fg='White')
+        self.message_file_browse_btn.grid(column=2, row=9, padx=5, pady=5, ipadx=15, ipady=3)
         
-        tkr.Label(self.window, text="Select Text File with Message.", fg='red').grid(row=10, column=1)
+        self.message_file_help = tkr.Label(self.master, text="Select Text File with Message.", fg='red')
+        self.message_file_help.grid(row=10, column=1)
 
-        tkr.Label(self.window, text="Users to Follow : ").grid(column=0, row=11, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
+        # Users To Follow Input
+        self.max_follow_label = tkr.Label(self.master, text="Max Users to Follow : ")
+        self.max_follow_label.grid(column=0, row=11, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
         
-        self.no_of_follow_entry = tkr.Entry(self.window, bd=4, width=42, relief="groove", validate="key", validatecommand=vcmd_1)
-        self.no_of_follow_entry.grid(column=1, row=11, padx=5, pady=5, ipady=3, sticky="w")
+        self.max_follow_entry = tkr.Entry(self.master, bd=4, width=42, relief="groove", validate="key", validatecommand=vcmd_1)
+        self.max_follow_entry.grid(column=1, row=11, padx=5, pady=5, ipady=3, sticky="w")
         
-        tkr.Label(self.window, text="Number of Users to Follow by a Account.", fg='red').grid(row=12, column=1)
+        self.max_follow_help = tkr.Label(self.master, text="Maximum Number of Users to Follow by Account.", fg='red')
+        self.max_follow_help.grid(row=12, column=1)
 
         # delay
-        tkr.Label(self.window, text="Break Time : ").grid(column=0, row=13, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
+        self.delay_label = tkr.Label(self.master, text="Break Time : ")
+        self.delay_label.grid(column=0, row=13, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
         
-        self.delay_entry = tkr.Entry(self.window, bd=4, width=42, relief="groove", validate="key", validatecommand=vcmd_2)
+        self.delay_entry = tkr.Entry(self.master, bd=4, width=42, relief="groove", validate="key", validatecommand=vcmd_2)
         self.delay_entry.grid(column=1, row=13, padx=5, pady=5, ipady=3, sticky="w")
         
-        tkr.Label(self.window, text="Break Time To Check Follow Back in Minutes.", fg='red').grid(row=14, column=1)
+        self.delay_entry_help = tkr.Label(self.master, text="Break Time To Check Follow Back in Minutes.", fg='red')
+        self.delay_entry_help.grid(row=14, column=1)
 
-        tkr.Label(self.window, text="Bot Status : ").grid(column=0, row=15, pady=5, ipadx=10, ipady=3, padx=15, sticky="w")
+        self.bot_status_prefix = tkr.Label(self.master, text="Bot Status : ")
+        self.bot_status_prefix.grid(column=0, row=15, pady=5, ipadx=10, ipady=3, padx=15, sticky="w")
 
         self.bot_status_label = tkr.Label(text="Idle", foreground='red')
         self.bot_status_label.grid(row=15, column=1, pady=5, sticky='w')
 
-        self.stop_btn = tkr.Button(self.window, text="Stop Bot", command=self.stop, bg=mycolor, fg='white')
+        self.stop_btn = tkr.Button(self.master, text="Stop Bot", command=self.stop, bg=mycolor, fg='white')
         self.stop_btn.grid(column=0, row=16, pady=20, ipadx=10, ipady=3, padx=25, sticky="w")
 
-        self.start_btn = tkr.Button(self.window, text="Start Bot", command=self.start_bot_thread, bg=mycolor, fg='white')
+        self.start_btn = tkr.Button(self.master, text="Start Bot", command=self.start_bot_thread, bg=mycolor, fg='white')
         self.start_btn.grid(column=2, row=16, pady=20, padx=10, ipadx=10, ipady=3, sticky='w')
-
-        self.window.mainloop()
 
 ###########################################################################################################################################################
