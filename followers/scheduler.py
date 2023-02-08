@@ -209,7 +209,6 @@ class BotScheduler:
                     users_file_path,
                     self.queue,
                     self.log_queue,
-                    self.err_queue,
                     self.remover_queue
                 )
             )
