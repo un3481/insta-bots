@@ -175,7 +175,7 @@ class View:
         try:
             if len(self.scheduler.processes) > 0:
                 self.scheduler.clear()
-                self.scheduler.join()
+                self.scheduler.join(10)
                 self.bot_status_label.config(text="Bot Stopped.")
                 print("Bot stopped.")
         except Exception:

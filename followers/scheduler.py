@@ -40,12 +40,9 @@ class BotScheduler:
     ###########################################################################################################################################################
 
     def join(self, timeout: float = None):
-        process_list: list[Process] = []
         while len(self.processes) > 0:
             process = self.processes.pop(0)
             process.join(timeout)
-            process_list.append(process)
-        return process_list
 
     ###########################################################################################################################################################
 
@@ -140,8 +137,9 @@ class BotScheduler:
         
         while len(_processes) > 0:
             process = _processes.pop(0)
-            self.processes.remove(process)
             process.join()
+            try: self.processes.remove(process)
+            except Exception: pass
 
         print("All processes finished!")
 
