@@ -9,11 +9,14 @@ from tkinter.ttk import *
 
 from PIL import ImageTk, Image
 
-from .scheduler import schedule_bots
+from .scheduler import BotScheduler
 
 ###########################################################################################################################################################
 
 class View:
+    
+    def __init__(self):
+        self.scheduler = BotScheduler()
 
     ###########################################################################################################################################################
 
@@ -124,7 +127,7 @@ class View:
 
         delay_time = int(delay_time)
 
-        rem_users: list[str] = schedule_bots(workers, delay_time, no_of_follows, users)
+        rem_users: list[str] = self.scheduler.spawn(workers, delay_time, no_of_follows, users)
         
         if len(rem_users) > 0:
             print("Could not Follow and send DMs to {}".format(len(rem_users)))
@@ -170,8 +173,9 @@ class View:
 
     def stop(self):
         try:
-            if self.instagram_automation_bot is not None:
-                self.instagram_automation_bot.close_browser()
+            if len(self.scheduler.processes) > 0:
+                self.scheduler.clear()
+                self.scheduler.join()
                 self.bot_status_label.config(text="Bot Stopped.")
                 print("Bot stopped.")
         except Exception:
