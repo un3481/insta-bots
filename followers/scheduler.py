@@ -32,7 +32,7 @@ def log_fun(file_path: str, queue: Queue):
         try: entry = queue.get(block=True)
         except Exception: break
         
-        with open(file_path, "w") as f:
+        with open(file_path, "a") as f:
             print(entry, file=f)
 
 ###########################################################################################################################################################
