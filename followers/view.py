@@ -173,13 +173,11 @@ class View:
 
     def stop(self):
         try:
-            if len(self.scheduler.processes) > 0:
-                self.scheduler.clear()
-                self.scheduler.join(10)
-                self.bot_status_label.config(text="Bot Stopped.")
-                print("Bot stopped.")
-        except Exception:
-            pass
+            self.scheduler.clear()
+            self.scheduler.join(timeout=10)
+            self.bot_status_label.config(text="Bot Stopped.")
+            print("Bot stopped.")
+        except Exception: pass
         
         self.accounts_file_entry.delete(0, tkr.END)
         self.users_file_entry.delete(0, tkr.END)
