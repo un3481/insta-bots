@@ -131,7 +131,7 @@ class View:
         rem_users: list[str] = self.scheduler.spawn(workers, message, delay_time, no_of_follows, users)
         
         if len(rem_users) > 0:
-            print("Could not Follow and send DMs to {}".format(len(rem_users)))
+            print("Could not Follow and send DMs to {} users".format(len(rem_users)))
         else:
             print("All People Followed and DM sent Successfully.")
         
