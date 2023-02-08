@@ -61,19 +61,20 @@ def worker_fun(worker: WorkerParam, message: str, delay_time: int, no_of_follows
             break
         
         # Read from the queue and check if it is ended
-        user: str = queue.get(block=True, timeout=3)
-        if user == None: break
+        user: str = None
+        try: user = queue.get(block=True, timeout=2)
+        except Exception: break
         
+        # Execute method
         follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message)
         
         print(follow_msg)
     
-        if follow_ok:
-            message_count += 1
+        if follow_ok: message_count += 1
         
         print("-" * 100)
         time.sleep(delay_time)
-        
+     
     print("Sent DMs to {} users.".format(message_count))
     
     # close browser
@@ -89,17 +90,15 @@ def schedule_bots(workers: list[WorkerParam], message: str, delay_time: int, no_
         if isinstance(user, str):
             queue.put(user)
     
-    # Add terminators
-    for worker in workers:
-        queue.put(None)
-    
     # Spawn worker processes
     processes: list[Process] = []
     for worker in workers:
+        # Launch new Process
         target = lambda qq: worker_fun(worker, message, delay_time, no_of_follows, qq)
         process = Process(target=target, args=((queue),))
         process.daemon = True
-        process.start() # Launch proc
+        process.start()
+        # Append Process
         processes.append(process)
         
     # Join processes
