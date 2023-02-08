@@ -51,7 +51,7 @@ class View:
             return False
 
         # get users file path -- corrected read directly from file
-        users_file_path = "ScrapedAccounts.txt" # users_file_entry.get() :::Hardcoding the file
+        users_file_path = self.users_file_entry.get() # :::Hardcoding the file
         users: list[str] = []
         with open(users_file_path) as f:
             for line in f:
@@ -134,11 +134,6 @@ class View:
             print("Could not Follow and send DMs to {} users".format(len(rem_users)))
         else:
             print("All People Followed and DM sent Successfully.")
-        
-        # Update users file
-        with open(users_file_path, 'w') as f:
-            text = "/n".join(rem_users)
-            f.write(text)
 
         # print success message
         self.bot_status_label.config(text="Bot Successfully Completed.")

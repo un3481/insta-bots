@@ -1,7 +1,7 @@
 
 from multiprocessing import Process, Queue
 import time
-import sys
+import datetime
 
 from typing import TypedDict
 
@@ -16,11 +16,44 @@ class WorkerParam(TypedDict):
 
 ###########################################################################################################################################################
 
-def bot_worker(param: WorkerParam, message: str, delay_time: int, no_of_follows: int, queue: Queue):
+def timestamp():
+    return datetime.datetime.now().replace(microsecond=0).isoformat()
 
-    print()
-    print("#" * 100)
-    print("Logging in to account: " + param['username'])
+def log(queue: Queue, proc: str, text: str):
+    queue.put(f"[{timestamp()}] {proc}: {text}")
+
+###########################################################################################################################################################
+
+def log_fun(file_path: str, queue: Queue):
+
+    # Read from the queue; this spawns as a separate Process
+    while True:
+        # Read from the queue and check if it is ended
+        entry: str = None
+        try: entry = queue.get(block=True)
+        except Exception: break
+        
+        with open(file_path, "w") as f:
+            print(entry, file=f)
+
+###########################################################################################################################################################
+
+def worker_fun(
+    param: WorkerParam,
+    message: str,
+    delay_time: int,
+    no_of_follows: int,
+    queue: Queue,
+    log_queue: Queue,
+    err_queue: Queue
+):
+
+    _log = lambda text: log(log_queue, param['username'], text)
+    _err = lambda text: log(err_queue, param['username'], text)
+    
+    _log("")
+    _log("#" * 100)
+    _log("Logging in to account: " + param['username'])
 
     # create bot
     bot = InstagramAutomationBot(
@@ -34,22 +67,22 @@ def bot_worker(param: WorkerParam, message: str, delay_time: int, no_of_follows:
 
     if not login_ok:
         bot.close_browser()
-        print(login_msg)
+        _log(login_msg)
         return
 
-    print("Logged in to account: " + param['username'])
-    print()
-    print("*" * 100)
+    _log("Logged in to account: " + param['username'])
+    _log("")
+    _log("*" * 100)
     
-    # print("Checking for follow back users.")
+    # _log("Checking for follow back users.")
     # flag, msg = bot.send_dm_message_who_followed_me(message, delay_time)
-    # print(msg)
-    # print("*" * 100)
+    # _log(msg)
+    # _log("*" * 100)
     # time.sleep(2)
 
-    print()
-    print("-" * 100)
-    print("Following {} users and sending DMs to them.".format(no_of_follows))
+    _log("")
+    _log("-" * 100)
+    _log("Following {} users and sending DMs to them.".format(no_of_follows))
 
     message_count = 0
 
@@ -64,10 +97,10 @@ def bot_worker(param: WorkerParam, message: str, delay_time: int, no_of_follows:
         except Exception: break
 
         # Execute method
-        follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message)
+        follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message, _log, _err)
 
-        print(follow_msg)
-        print("-" * 100)
+        _log(follow_msg)
+        _log("-" * 100)
         
         if follow_ok: message_count += 1
         
@@ -76,7 +109,7 @@ def bot_worker(param: WorkerParam, message: str, delay_time: int, no_of_follows:
         else:
             time.sleep(delay_time * 60)
 
-    print("Sent DMs to {} users.".format(message_count))
+    _log("Sent DMs to {} users.".format(message_count))
 
     # close browser
     bot.close_browser()
@@ -86,9 +119,20 @@ def bot_worker(param: WorkerParam, message: str, delay_time: int, no_of_follows:
 class BotScheduler:
     
     def __init__(self):
+        # Init Log worker
+        self.log_queue = Queue()
+        self.log_proc = Process(target=log_fun, args=("followers.log", self.log_queue))
+        self.log_proc.daemon = True
+        self.log_proc.start()
+        # Init err worker
+        self.err_queue = Queue()
+        self.err_proc = Process(target=log_fun, args=("followers.err", self.err_queue))
+        self.err_proc.daemon = True
+        self.err_proc.start()
+        # Init queues
         self.queue = Queue()
         self.processes: list[Process] = []
-    
+
     ###########################################################################################################################################################
 
     def clear(self):
@@ -114,6 +158,8 @@ class BotScheduler:
     ###########################################################################################################################################################
 
     def spawn(self, workers: list[WorkerParam], message: str, delay_time: int, no_of_follows: int, users: list[str]):
+        
+        _log = lambda text: log(self.log_queue, "_", text)
 
         # Write users into the queue
         for user in users:
@@ -125,7 +171,18 @@ class BotScheduler:
         
         for param in workers:
             # Launch new Process
-            process = Process(target=bot_worker, args=(param, message, delay_time, no_of_follows, self.queue))
+            process = Process(
+                target=worker_fun,
+                args=(
+                    param,
+                    message,
+                    delay_time,
+                    no_of_follows,
+                    self.queue,
+                    self.log_queue,
+                    self.err_queue
+                )
+            )
             process.daemon = True
             process.start()
             # Append Process to list
@@ -133,7 +190,7 @@ class BotScheduler:
             self.processes.append(process)
 
         # Join processes
-        print("Waiting for processes to join...")
+        _log("Waiting for processes to join...")
         
         while len(_processes) > 0:
             process = _processes.pop(0)
@@ -141,7 +198,7 @@ class BotScheduler:
             try: self.processes.remove(process)
             except Exception: pass
 
-        print("All processes finished!")
+        _log("All processes finished!")
 
         # Return remaining users
         return self.clear()

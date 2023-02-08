@@ -317,14 +317,14 @@ class InstagramAutomationBot:
 
     ###########################################################################################################################################################
 
-    def follow_user_and_send_dm(self, user, message):
+    def follow_user_and_send_dm(self, user, message, _log, _err):
         """
         Follow the user and send the message.
         :param user: user to follow
         :param message: message to send
         :return: True, "Followed the user and sent the message."
         """
-        print("Bot is going to follow the user: '{}' to send message: ".format(user))
+        _log("Bot is going to follow the user: '{}' to send message: ".format(user))
 
         # open the user's profile
         self.driver.get("https://www.instagram.com/" + user + "/")
@@ -334,7 +334,7 @@ class InstagramAutomationBot:
                 lambda x: x.execute_script("return document.readyState === 'complete'")
             )
         except TimeoutException:
-            print("TimeoutException: Page not loaded.")
+            _err("TimeoutException: Page not loaded.")
             return False, "TimeoutException: Page not loaded."
 
         is_private = False
@@ -363,22 +363,22 @@ class InstagramAutomationBot:
                 except NoSuchElementException:
                     try:
                         self.driver.find_element(By.XPATH, "//*[text()='Following']") # check if following
-                        print("User: " + user + " is already followed. Removing from list")
+                        _log("User: " + user + " is already followed. Removing from list")
                         return False, "User: " + user + " is already followed"
                             
                     except:
                         # try if user is requested
                         try:
                             self.driver.find_element(By.XPATH, "//*[text()='Requested']") # check if requested
-                            print("User: " + user + " has a request already sent. Removing from list")
+                            _log("User: " + user + " has a request already sent. Removing from list")
                             return False, "User: " + user + " has a request sent."
                         except:
-                            print("TimeoutException: Follow button not found.")
+                            _err("TimeoutException: Follow button not found.")
                             return False, "TimeoutException-1: Follow button not found."
-                        # print("TimeoutException: Follow button not found.")
+                        # _err("TimeoutException: Follow button not found.")
                         # return False, "TimeoutException-1: Follow button not found."
             except NoSuchElementException:
-                print("TimeoutException-2: Follow button not found.")
+                _err("TimeoutException-2: Follow button not found.")
                 return False, "TimeoutException-2: Follow button not found."
 
         # # check if the user is private
@@ -387,7 +387,7 @@ class InstagramAutomationBot:
         #     # check if requested button to determine if its private
         #     self.driver.find_element(By.XPATH, "//*[text()='Requested']")
         #     is_private = True
-        #     print("user is private")
+        #     _log("user is private")
         # except NoSuchElementException:
         #     pass
 
@@ -412,10 +412,10 @@ class InstagramAutomationBot:
                     break
 
                 if restriction_count > 3:
-                    print("Restrict activity popup found. Bot is not allowed to follow the user due to "
+                    _log("Restrict activity popup found. Bot is not allowed to follow the user due to "
                           "Instagram's restrictions.")
-                    print("Instagram is restricting the activities. Please try again after few hours.")
-                    print("Skipping current account...")
+                    _log("Instagram is restricting the activities. Please try again after few hours.")
+                    _log("Skipping current account...")
 
                     return None, "Instagram is restricting the activities."
 
@@ -425,9 +425,9 @@ class InstagramAutomationBot:
                 except:
                     pass
 
-                print("Bot is going to sleep for 1 to 2 minutes.")
+                _log("Bot is going to sleep for 1 to 2 minutes.")
                 time.sleep(random.randint(60, 120))
-                print("Bot is going to wake up now.")
+                _log("Bot is going to wake up now.")
                 self.driver.refresh()
                 # wait for the page to load
                 try:
@@ -435,10 +435,10 @@ class InstagramAutomationBot:
                         lambda x: x.execute_script("return document.readyState === 'complete'")
                     )
                 except TimeoutException:
-                    print("TimeoutException-3: Page not loaded.")
+                    _err("TimeoutException-3: Page not loaded.")
                     continue
 
-                print("Bot is going to follow the user again.")
+                _log("Bot is going to follow the user again.")
                 time.sleep(random.randint(8, 15))
                 # wait for the follow button to be visible
                 try:
@@ -452,10 +452,10 @@ class InstagramAutomationBot:
                     follow_button.click()
                     time.sleep(random.randint(8, 15))
                 except:
-                    print("TimeoutException-4: Follow button not found.")
+                    _err("TimeoutException-4: Follow button not found.")
                     break
 
-            print("Followed the user: " + user)
+            _log("Followed the user: " + user)
             is_followed = True
             time.sleep(random.randint(25, 40))
         except NoSuchElementException:
@@ -479,10 +479,10 @@ class InstagramAutomationBot:
                         break
 
                     if restriction_count > 3:
-                        print("Restrict activity popup found. Bot is not allowed to follow the user due to "
+                        _log("Restrict activity popup found. Bot is not allowed to follow the user due to "
                               "Instagram's restrictions.")
-                        print("Instagram is restricting the activities. Please try again after few hours.")
-                        print("Exiting the program...")
+                        _log("Instagram is restricting the activities. Please try again after few hours.")
+                        _log("Exiting the program...")
 
                         return None, "Instagram is restricting the activities."
                     try:
@@ -491,9 +491,9 @@ class InstagramAutomationBot:
                     except Exception:
                         pass
 
-                    print("Bot is going to sleep for 1 to 2 minutes.")
+                    _log("Bot is going to sleep for 1 to 2 minutes.")
                     time.sleep(random.randint(60, 120))
-                    print("Bot is going to wake up now.")
+                    _log("Bot is going to wake up now.")
                     self.driver.refresh()
                     # wait for the page to load
                     try:
@@ -501,10 +501,10 @@ class InstagramAutomationBot:
                             lambda x: x.execute_script("return document.readyState === 'complete'")
                         )
                     except TimeoutException:
-                        print("TimeoutException-5: Page not loaded.")
+                        _err("TimeoutException-5: Page not loaded.")
                         continue
 
-                    print("Bot is going to follow the user again.")
+                    _log("Bot is going to follow the user again.")
                     time.sleep(random.randint(8, 15))
                     # wait for the follow button to be visible
                     try:
@@ -518,13 +518,13 @@ class InstagramAutomationBot:
                         follow_button.click()
                         time.sleep(random.randint(8, 15))
                     except:
-                        print("TimeoutException-6: Follow button not found.")
+                        _err("TimeoutException-6: Follow button not found.")
                         break
 
-                print("Followed the user: " + user)
+                _log("Followed the user: " + user)
                 is_followed = True
             except NoSuchElementException:
-                print("NoSuchElementException-7: Follow button not found.")
+                _err("NoSuchElementException-7: Follow button not found.")
                 return False, "NoSuchElementException-7: Follow button not found."
         
         ##########################################################################################
@@ -534,17 +534,17 @@ class InstagramAutomationBot:
             # check if requested button to determine if its private
             self.driver.find_element(By.XPATH, "//*[text()='Requested']")
             is_private = True
-            print("user is private")
+            _log("user is private")
         except NoSuchElementException:
             pass
         ##########################################################################################
 
         if is_followed:
             if is_private:
-                print("Not able to send message to the user: " + user + " because the user is private.")
-                with open(f"{self.username}.txt", 'a') as f:
-                    f.write(user)
-                    f.write("\n")
+                _log("Not able to send message to the user: " + user + " because the user is private.")
+                # with open(f"{self.username}.txt", 'a') as f:
+                #     f.write(user)
+                #     f.write("\n")
                 # remove from scraped list
                 return False, "User is private. Not able to send message."
             else:
@@ -565,10 +565,10 @@ class InstagramAutomationBot:
                             lambda x: x.execute_script("return document.readyState === 'complete'")
                         )
                     except TimeoutException:
-                        print("Page load timeout for user profile page.")
+                        _err("Page load timeout for user profile page.")
                         return False, "Page load timeout for user profile page."
                 except TimeoutException:
-                    print("TimeoutException-11: Page load timeout")
+                    _err("TimeoutException-11: Page load timeout")
                     return False, "TimeoutException-11: Page load timeout"
 
                 time.sleep(random.randint(2, 4))
@@ -598,7 +598,7 @@ class InstagramAutomationBot:
                     time.sleep(random.randint(4, 7))
                     ###################################################################################################
                 except TimeoutException:
-                    print("TimeoutException: Page load timeout")
+                    _err("TimeoutException: Page load timeout")
                     return False, "TimeoutException-22: Page load timeout"
 
                 time.sleep(random.randint(2, 4))
@@ -613,12 +613,12 @@ class InstagramAutomationBot:
                     send_button.click()
                     time.sleep(random.randint(5, 8))
                 except TimeoutException:
-                    print("TimeoutException: Page load timeout")
+                    _err("TimeoutException: Page load timeout")
                     return False, "TimeoutException-33: Page load timeout"
 
                 time.sleep(random.randint(2, 4))
 
-                #print("DM sent to the user: " + user)
+                # _log("DM sent to the user: " + user)
                 time.sleep(random.randint(10, 20))
 
                 return True, "DM sent to the user: " + user
