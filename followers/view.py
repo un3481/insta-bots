@@ -17,6 +17,10 @@ class InstagramBot(tkr.Frame):
         self.master = master
         self.scheduler = scheduler
         
+        # self.master.iconbitmap(os.path.join(os.getcwd(), 'assets', 'insta_icon.ico'))
+        img_path = Image.open(os.path.join(os.getcwd(), 'assets', 'insta_logo.png'))
+        self.instagram_logo = ImageTk.PhotoImage(img_path)
+    
     ###########################################################################################################################################################
 
     def start_bot_thread(self):
@@ -258,18 +262,14 @@ class InstagramBot(tkr.Frame):
         # Set Geometry
         self.master.geometry('640x560')
         self.master.resizable(False, False)
-        
-        # self.master.iconbitmap(os.path.join(os.getcwd(), 'assets', 'insta_icon.ico'))
-        image_path = Image.open(os.path.join(os.getcwd(), 'assets', 'insta_logo.png'))
-        img = ImageTk.PhotoImage(image_path)
 
         mycolor = '#%02x%02x%02x' % (68, 68, 68)
 
         vcmd_1 = (self.master.register(self.validate_max_follow_entry), '%P')
         vcmd_2 = (self.master.register(self.validate_delay_entry), '%P')
 
-        # self.img_label = ttk.Label(self.master, image=img)
-        self.img_label = ttk.Label(self.master, image=img, width=10)
+        # self.img_label = ttk.Label(self.master, image=self.instagram_logo)
+        self.img_label = ttk.Label(self.master, image=self.instagram_logo, width=10)
         self.img_label.grid(column=1, row=0, columnspan=3, padx=80, pady=5, sticky='w')
         
         self.label_1 = ttk.Label(text="")
