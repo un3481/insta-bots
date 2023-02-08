@@ -16,24 +16,25 @@ class WorkerParam(TypedDict):
 
 ###########################################################################################################################################################
 
-def timestamp():
-    return datetime.datetime.now().replace(microsecond=0).isoformat()
-
-def log(queue: Queue, proc: str, text: str):
-    queue.put(f"[{timestamp()}] {proc}: {text}")
+def queue_log(queue: Queue, file_path: str, proc: str, text: str):
+    isotime = datetime.datetime.now().replace(microsecond=0).isoformat()
+    queue.put((file_path, f"[{isotime}] {proc}: {text}"))
 
 ###########################################################################################################################################################
 
-def log_fun(file_path: str, queue: Queue):
+def log_fun(queue: Queue):
     # Read from the queue; this spawns as a separate Process
     while True:
         # Read from the queue and check if it is ended
-        entry: str = None
+        entry: tuple[str, str] = None
         try: entry = queue.get(block=True)
-        except Exception: break
+        except Exception: continue
         
-        with open(file_path, "a") as f:
-            print(entry, file=f)
+        try:
+            file_path, line = entry
+            with open(file_path, "a") as f:
+                print(line, file=f)
+        except Exception: pass
 
 ###########################################################################################################################################################
 
@@ -43,7 +44,7 @@ def remover_fun(queue: Queue):
         # Read from the queue and check if it is ended
         entry: tuple[str, str] = None
         try: entry = queue.get(block=True)
-        except Exception: break
+        except Exception: continue
         
         try:
             file_path, user = entry
@@ -62,17 +63,16 @@ def worker_fun(
     param: WorkerParam,
     message: str,
     delay_time: int,
-    no_of_follows: int,
+    max_follows: int,
     users_file_path: str,
     queue: Queue,
     log_queue: Queue,
-    err_queue: Queue,
     remover_queue: Queue
 ):
 
-    _log = lambda text: log(log_queue, param['username'], text)
-    _err = lambda text: log(err_queue, param['username'], text)
-    
+    _log = lambda text: queue_log(log_queue, "followers.log", param['username'], text)
+    _err = lambda text: queue_log(log_queue, "followers.err", param['username'], text)
+
     _log("")
     _log("#" * 100)
     _log("Logging in to account: " + param['username'])
@@ -104,14 +104,14 @@ def worker_fun(
 
     _log("")
     _log("-" * 100)
-    _log("Following {} users and sending DMs to them.".format(no_of_follows))
+    _log(f"Following {max_follows} users and sending DMs to them.")
 
-    message_count = 0
+    follow_count = 0
 
     # Read from the queue; this spawns as a separate Process
     while True:
         # Check message count
-        if message_count >= no_of_follows: break
+        if follow_count >= max_follows: break
             
         # Read from the queue and check if it is ended
         user: str = None
@@ -127,7 +127,7 @@ def worker_fun(
         is_private = (not follow_ok) and follow_msg == "User is private. Not able to send message."
         
         if follow_ok:
-            message_count += 1
+            follow_count += 1
         
         if follow_ok or is_private:
             remover_queue.put((users_file_path, user))
@@ -135,10 +135,12 @@ def worker_fun(
         # Wait for determined delay
         time.sleep(delay_time * 60)
 
-    _log("Sent DMs to {} users.".format(message_count))
+    _log(f"Sent DMs to {follow_count} users.")
 
     # close browser
     bot.close_browser()
+    
+    _log(f"Bot Stopped: " + param['username'])
 
 ###########################################################################################################################################################
 
@@ -147,14 +149,9 @@ class BotScheduler:
     def __init__(self):
         # Init Log worker
         self.log_queue = Queue()
-        self.log_proc = Process(target=log_fun, args=("followers.log", self.log_queue))
+        self.log_proc = Process(target=log_fun, args=((self.log_queue),))
         self.log_proc.daemon = True
         self.log_proc.start()
-        # Init err worker
-        self.err_queue = Queue()
-        self.err_proc = Process(target=log_fun, args=("followers.err", self.err_queue))
-        self.err_proc.daemon = True
-        self.err_proc.start()
         # Init remover worker
         self.remover_queue = Queue()
         self.remover_proc = Process(target=remover_fun, args=((self.remover_queue),))
@@ -188,9 +185,9 @@ class BotScheduler:
 
     ###########################################################################################################################################################
 
-    def spawn(self, workers: list[WorkerParam], message: str, delay_time: int, no_of_follows: int, users_file_path: str, users: list[str]):
-        
-        _log = lambda text: log(self.log_queue, "_", text)
+    def spawn(self, workers: list[WorkerParam], message: str, delay_time: int, max_follows: int, users_file_path: str, users: list[str]):
+    
+        _log = lambda text: queue_log(self.log_queue, "followers.log", "_", text)
 
         # Write users into the queue
         for user in users:
@@ -208,7 +205,7 @@ class BotScheduler:
                     param,
                     message,
                     delay_time,
-                    no_of_follows,
+                    max_follows,
                     users_file_path,
                     self.queue,
                     self.log_queue,
