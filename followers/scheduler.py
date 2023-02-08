@@ -103,7 +103,7 @@ class BotScheduler:
             if follow_ok: message_count += 1
 
             print("-" * 100)
-            time.sleep(delay_time)
+            time.sleep(delay_time * 60)
 
         print("Sent DMs to {} users.".format(message_count))
 
