@@ -169,7 +169,6 @@ class InstagramAutomationBot:
             )
         except TimeoutException:
             self._err("TimeoutException: Login failed.")
-            popup("Error", "Login failed. Please try again.")
             return False, "TimeoutException: Login failed."
 
         # send username with delay
@@ -200,24 +199,15 @@ class InstagramAutomationBot:
 
             if error_message.lower().__contains__("There was a problem logging you into Instagram.".lower()):
                 self._err("There was a problem logging you into Instagram. Please try again soon.")
-                popup("Error",
-                                         "There was a problem logging you into Instagram. Please try again soon.")
                 return False, "Problem in logging into Instagram. PTA!"
             elif error_message.lower().__contains__("Sorry, your password was incorrect.".lower()):
                 self._err("Sorry, your password was incorrect. Please double-check your password.")
-                popup("Error",
-                                         "Sorry, your password was incorrect. Please double-check your password.")
                 return False, "Sorry, your password was incorrect."
             elif error_message.lower().__contains__("The username you entered doesn't belong to an account.".lower()):
-                self._err("The username you entered doesn't belong to an account. "
-                      "Please check your username and try again.")
-                popup("Error",
-                                         "The username you entered doesn't belong to an account. "
-                                         "Please check your username and try again.")
+                self._err("The username you entered doesn't belong to an account. Please check your username and try again.")
                 return False, "Sorry, your username was incorrect."
             else:
                 self._err("Login failed.")
-                popup("Error", "Login failed. Please try again.")
                 return False, "Login failed. PTA!"
         except TimeoutException:
             pass
@@ -238,12 +228,14 @@ class InstagramAutomationBot:
             self.driver.find_element(By.XPATH, "//h2[contains(text(), 'We Detected An Unusual Login Attempt')]")
 
             # click on ok button of tkinter message box to continue the process of login to instagram account
-            resp = popup("Unusual Login Attempt",
-                                              "There is security barrier by Instagram Authorities.\n"
-                                              "From here you have to manually verify your login by receiving "
-                                              "code on your mobile or email.\n"
-                                              "After receiving the code, and approval, you can continue the process.\n"
-                                              "Do you want to continue?")
+            resp = popup(
+                "Unusual Login Attempt",
+                "There is security barrier by Instagram Authorities.\n" +
+                "From here you have to manually verify your login by receiving " +
+                "code on your mobile or email.\n" +
+                "After receiving the code, and approval, you can continue the process.\n" +
+                "Do you want to continue?"
+            )
             if resp:
                 time.sleep(random.randint(2, 4))
                 try:
@@ -305,7 +297,6 @@ class InstagramAutomationBot:
             self._log("Login successful.")
         except TimeoutException:
             self._err("TimeoutException: Login failed.")
-            popup("Error", "Login failed. Please try again.")
             return False, "Login failed. PTA!"
 
         self._log("Login successful.")
