@@ -4,6 +4,9 @@ import pickle
 import random
 import time
 
+import tkinter as tkr
+from tkinter import ttk
+
 import pyperclip
 from requests.exceptions import ConnectionError
 from requests.exceptions import SSLError, ReadTimeout
