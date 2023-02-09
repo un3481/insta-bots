@@ -81,7 +81,9 @@ def worker_fun(
     bot = InstagramAutomationBot(
         param['username'],
         param['password'],
-        param['proxy']
+        param['proxy'],
+        _log,
+        _err
     )
 
     # login to instagram
@@ -119,7 +121,7 @@ def worker_fun(
         except Exception: break
 
         # Execute method
-        follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message, _log, _err)
+        follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message)
 
         _log(follow_msg)
         _log("-" * 100)
