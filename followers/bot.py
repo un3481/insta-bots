@@ -21,8 +21,6 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from typing import Callable
 
-from .view import popup
-
 ###########################################################################################################################################################
 
 chrome_options = Options()
@@ -38,6 +36,16 @@ chrome_options.add_argument("--disable-hang-monitor")
 chrome_options.add_argument("--disable-prompt-on-repost")
 chrome_options.add_argument("--disable-renderer-backgrounding")
 chrome_options.add_argument('--disable-logging')
+
+###########################################################################################################################################################
+
+def popup(title: str, content: str):
+    win = tkr.Toplevel()
+    win.wm_title(title)
+    l = tkr.Label(win, text=content)
+    l.grid(row=0, column=0)
+    b = ttk.Button(win, text="Okay", command=win.destroy)
+    b.grid(row=1, column=0)
 
 ###########################################################################################################################################################
 
