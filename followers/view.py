@@ -50,6 +50,16 @@ class InstagramBot(tkr.Frame):
         thread.start()
         
         return thread
+    
+    ###########################################################################################################################################################
+
+    def kill_worker_thread(self):
+    
+        thread = threading.Thread(target=self.kill_worker)
+        thread.daemon = True
+        thread.start()
+        
+        return thread
 
     ###########################################################################################################################################################
 
@@ -236,6 +246,13 @@ class InstagramBot(tkr.Frame):
 
     ###########################################################################################################################################################
 
+    def kill_worker(self):
+        # get account to kill
+        worker_account = self.kill_entry.get()
+        return self.scheduler.kill_process(worker_account)
+
+    ###########################################################################################################################################################
+
     def validate_delay_entry(self, p):
         if len(p) != 0:
             x = re.match(r"^\d+$", p)
@@ -303,7 +320,7 @@ class InstagramBot(tkr.Frame):
         # Set window Title
         self.master.title("Instagram Bot")
         # Set Geometry
-        self.master.geometry('640x560')
+        self.master.geometry('680x620')
         self.master.resizable(False, False)
 
         mycolor = '#%02x%02x%02x' % (68, 68, 68)
@@ -383,13 +400,26 @@ class InstagramBot(tkr.Frame):
 
         self.bot_status_label = tkr.Label(text="Idle", foreground='red')
         self.bot_status_label.grid(row=15, column=1, pady=5, sticky='w')
+        
+        # Kill Worker
+        self.kill_label = tkr.Label(self.master, text="Kill Worker : ")
+        self.kill_label.grid(column=0, row=16, pady=5, ipadx=10, ipady=3, padx=10, sticky="w")
+        
+        self.kill_entry = tkr.Entry(self.master, bd=4, width=42, relief="groove", validate="key", validatecommand=vcmd_2)
+        self.kill_entry.grid(column=1, row=16, padx=5, pady=5, ipady=3, sticky="w")
+        
+        self.kill_btn = tkr.Button(self.master, text="Kill", command=self.kill_worker, bg='#567', fg='White')
+        self.kill_btn.grid(column=2, row=16, padx=5, pady=5, ipadx=15, ipady=3)
+        
+        self.kill_entry_help = tkr.Label(self.master, text="Kill worked logged in given user.", fg='red')
+        self.kill_entry_help.grid(row=17, column=1)
 
         # Stop
         self.stop_btn = tkr.Button(self.master, text="Stop Bot", command=self.stop_thread, bg=mycolor, fg='white')
-        self.stop_btn.grid(column=0, row=16, pady=20, ipadx=10, ipady=3, padx=25, sticky="w")
+        self.stop_btn.grid(column=0, row=18, pady=20, ipadx=10, ipady=3, padx=25, sticky="w")
 
         # Start
         self.start_btn = tkr.Button(self.master, text="Start Bot", command=self.start_thread, bg=mycolor, fg='white')
-        self.start_btn.grid(column=2, row=16, pady=20, padx=10, ipadx=10, ipady=3, sticky='w')
+        self.start_btn.grid(column=2, row=18, pady=20, padx=10, ipadx=10, ipady=3, sticky='w')
 
 ###########################################################################################################################################################

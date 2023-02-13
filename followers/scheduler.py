@@ -66,7 +66,7 @@ def worker_fun(
     delay_time: int,
     max_follows: int,
     users_file_path: str,
-    queue: Queue,
+    users_queue: Queue,
     log_queue: Queue,
     remover_queue: Queue
 ):
@@ -153,7 +153,7 @@ def worker_fun(
 
             # Read from the queue and check if it is ended
             user: str = None
-            try: user = queue.get(block=True, timeout=2)
+            try: user = users_queue.get(block=True, timeout=2)
             except Exception: break
 
             # Execute method
@@ -198,8 +198,8 @@ class BotScheduler:
         self.remover_proc.daemon = True
         self.remover_proc.start()
         # Init queues
-        self.queue = Queue()
-        self.processes: list[Process] = []
+        self.users_queue = Queue()
+        self.processes: list[tuple[str, Process]] = []
 
     ###########################################################################################################################################################
 
@@ -209,7 +209,7 @@ class BotScheduler:
         
         while True:
             try:
-                item = self.queue.get(block=False)
+                item = self.users_queue.get(block=False)
                 queue_list.append(item)
             except Exception: break
         
@@ -220,8 +220,16 @@ class BotScheduler:
 
     def join(self, timeout: float = None):
         while len(self.processes) > 0:
-            process = self.processes.pop(0)
+            user, process = self.processes.pop(0)
             process.join(timeout)
+            
+    ###########################################################################################################################################################
+
+    def kill_process(self, target: str):
+        for item in self.processes:
+            user, process = item
+            if user == target:
+                process.kill()
 
     ###########################################################################################################################################################
 
@@ -232,10 +240,10 @@ class BotScheduler:
         # Write users into the queue
         for user in users:
             if isinstance(user, str):
-                self.queue.put(user)
+                self.users_queue.put(user)
 
         # Spawn worker processes
-        _processes: list[Process] = []
+        _processes: list[tuple[str, Process]] = []
         
         for param in workers:
             # Launch new Process
@@ -247,7 +255,7 @@ class BotScheduler:
                     delay_time,
                     max_follows,
                     users_file_path,
-                    self.queue,
+                    self.users_queue,
                     self.log_queue,
                     self.remover_queue
                 )
@@ -255,16 +263,16 @@ class BotScheduler:
             process.daemon = True
             process.start()
             # Append Process to list
-            _processes.append(process)
-            self.processes.append(process)
+            _processes.append((param["username"], process))
+            self.processes.append((param["username"], process))
 
         # Join processes
         _log("Waiting for processes to join...")
         
         while len(_processes) > 0:
-            process = _processes.pop(0)
+            user, process = _processes.pop(0)
             process.join()
-            try: self.processes.remove(process)
+            try: self.processes.remove((user, process))
             except Exception: pass
 
         _log("All processes finished!")
