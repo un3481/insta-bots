@@ -51,6 +51,21 @@ def popup(title: str, content: str):
 
 ###########################################################################################################################################################
 
+def paste_content(driver: webdriver.Chrome, element, content: str):
+    script = f'''
+        const text = `{content}`;
+        const dataTransfer = new DataTransfer();
+        dataTransfer.setData('text', text);
+        const event = new ClipboardEvent('paste', {{
+          clipboardData: dataTransfer,
+          bubbles: true
+        }});
+        arguments[0].dispatchEvent(event)
+    '''
+    driver.execute_script(script, element)
+
+###########################################################################################################################################################
+
 class InstagramAutomationBot:
     
     driver: webdriver.Chrome = None
@@ -598,8 +613,9 @@ class InstagramAutomationBot:
                     ActionChains(self.driver).click(message_textarea).perform()
                     time.sleep(0.5)
                     
-                    # paste the comment text from clipboard
-                    message_textarea.send_keys(message)
+                    # paste the comment text
+                    paste_content(self.driver, message_textarea, message)
+                    message_textarea.send_keys(Keys.BACKSPACE)
                     time.sleep(random.randint(4, 7))
                     
                     ###################################################################################################

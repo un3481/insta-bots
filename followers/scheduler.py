@@ -70,107 +70,117 @@ def worker_fun(
     log_queue: Queue,
     remover_queue: Queue
 ):
-
     _log = lambda text: queue_log(log_queue, "followers.log", param['username'], text)
     _err = lambda text: queue_log(log_queue, "followers.err", param['username'], text)
-
-    _log("")
-    _log("#" * 100)
-    _log("Logging in to account: " + param['username'])
-
-    # create bot
-    bot = InstagramAutomationBot(
-        param['username'],
-        param['password'],
-        param['proxy'],
-        _log,
-        _err
-    )
     
-    # Try to login
-    while True:
-        # Set headless browser options
-        headless_options = deepcopy(bot.chrome_options)
-        headless_options.add_argument("--headless")
-        
-        # Launch browser headless
-        bot.driver = bot.create_selenium_webdriver(headless_options)
+    try:
+        _log("")
+        _log("#" * 100)
+        _log("Logging in to account: " + param['username'])
 
-        # login to instagram
-        login_ok, login_msg = bot.login()
+        # create bot
+        bot = InstagramAutomationBot(
+            param['username'],
+            param['password'],
+            param['proxy'],
+            _log,
+            _err
+        )
 
-        if login_ok:
-            _log("Logged in to account: " + param['username'])
-            _log("")
-            _log("*" * 100)
-            break
+        # Try to login
+        while True:
+            # Set headless browser options
+            headless_options = deepcopy(bot.chrome_options)
+            headless_options.add_argument("--headless")
 
-        bot.close_browser()
-        _log(login_msg)
-        
-        # Launch browser visible
-        bot.driver = bot.create_selenium_webdriver(bot.chrome_options)
-        
-        # Try login to instagram again
-        login_ok, login_msg = bot.login()
-        
-        if not login_ok:
-            # Wait until user closes browser
-            DISCONNECTED_MSG = 'Unable to evaluate script: disconnected: not connected to DevTools\n'
-            while True:
-                if bot.driver.get_log('driver')[-1]['message'] == DISCONNECTED_MSG:
-                    print('Browser window closed by user')
-                    break
-                time.sleep(1)
-        
-        # Ensure browser closed
-        bot.close_browser()
-    
-    # _log("Checking for follow back users.")
-    # flag, msg = bot.send_dm_message_who_followed_me(message, delay_time)
-    # _log(msg)
-    # _log("*" * 100)
-    # time.sleep(2)
+            # Launch browser headless
+            bot.driver = bot.create_selenium_webdriver(headless_options)
+            _log("browser started: headless")
 
-    _log("")
-    _log("-" * 100)
-    _log(f"Following {max_follows} users and sending DMs to them.")
+            # login to instagram
+            login_ok, login_msg = bot.login()
 
-    follow_count = 0
+            if login_ok:
+                _log("Logged in to account: " + param['username'])
+                _log("")
+                _log("*" * 100)
+                break
 
-    # Read from the queue; this spawns as a separate Process
-    while True:
-        # Check message count
-        if follow_count >= max_follows: break
+            _err(login_msg)
             
-        # Read from the queue and check if it is ended
-        user: str = None
-        try: user = queue.get(block=True, timeout=2)
-        except Exception: break
+            bot.close_browser()
+            _log("browser closed")
 
-        # Execute method
-        follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message)
+            # Launch browser visible
+            bot.driver = bot.create_selenium_webdriver(bot.chrome_options)
+            _log("browser started: visible")
 
-        _log(follow_msg)
+            # Try login to instagram again
+            login_ok, login_msg = bot.login()
+
+            if not login_ok:
+                _log("waiting until operator closes window")
+                
+                # Wait until user closes browser
+                DISCONNECTED_MSG = 'Unable to evaluate script: disconnected: not connected to DevTools\n'
+                while True:
+                    if bot.driver.get_log('driver')[-1]['message'] == DISCONNECTED_MSG:
+                        print('Browser window closed by user')
+                        break
+                    time.sleep(1)
+            
+            _log("browser closed by operator")
+
+            # Ensure browser closed
+            bot.close_browser()
+
+        # _log("Checking for follow back users.")
+        # flag, msg = bot.send_dm_message_who_followed_me(message, delay_time)
+        # _log(msg)
+        # _log("*" * 100)
+        # time.sleep(2)
+
+        _log("")
         _log("-" * 100)
-        
-        is_private = (not follow_ok) and follow_msg == "User is private. Not able to send message."
-        
-        if follow_ok:
-            follow_count += 1
-        
-        if follow_ok or is_private:
-            remover_queue.put((users_file_path, user))
-        
-        # Wait for determined delay
-        time.sleep(delay_time * 60)
+        _log(f"Following {max_follows} users and sending DMs to them.")
 
-    _log(f"Sent DMs to {follow_count} users.")
+        follow_count = 0
 
-    # close browser
-    bot.close_browser()
-    
-    _log(f"Bot Stopped: " + param['username'])
+        # Read from the queue; this spawns as a separate Process
+        while True:
+            # Check message count
+            if follow_count >= max_follows: break
+
+            # Read from the queue and check if it is ended
+            user: str = None
+            try: user = queue.get(block=True, timeout=2)
+            except Exception: break
+
+            # Execute method
+            follow_ok, follow_msg = bot.follow_user_and_send_dm(user, message)
+
+            _log(follow_msg)
+            _log("-" * 100)
+
+            is_private = (not follow_ok) and follow_msg == "User is private. Not able to send message."
+
+            if follow_ok:
+                follow_count += 1
+
+            if follow_ok or is_private:
+                remover_queue.put((users_file_path, user))
+
+            # Wait for determined delay
+            time.sleep(delay_time * 60)
+
+        _log(f"Sent DMs to {follow_count} users.")
+
+        # close browser
+        bot.close_browser()
+
+        _log(f"Bot Stopped: " + param['username'])
+    except Exception as error:
+        _err(f"Bot {param['username']} found an error: {error}")
 
 ###########################################################################################################################################################
 
