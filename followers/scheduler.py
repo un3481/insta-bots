@@ -1,5 +1,6 @@
 
 from multiprocessing import Process, Queue
+from copy import deepcopy
 import time
 import datetime
 
@@ -85,18 +86,45 @@ def worker_fun(
         _log,
         _err
     )
+    
+    # Try to login
+    while True:
+        # Set headless browser options
+        headless_options = deepcopy(bot.chrome_options)
+        headless_options.add_argument("--headless")
+        
+        # Launch browser headless
+        bot.driver = bot.create_selenium_webdriver(headless_options)
 
-    # login to instagram
-    login_ok, login_msg = bot.login()
+        # login to instagram
+        login_ok, login_msg = bot.login()
 
-    if not login_ok:
+        if login_ok:
+            _log("Logged in to account: " + param['username'])
+            _log("")
+            _log("*" * 100)
+            break
+
         bot.close_browser()
         _log(login_msg)
-        return
-
-    _log("Logged in to account: " + param['username'])
-    _log("")
-    _log("*" * 100)
+        
+        # Launch browser visible
+        bot.driver = bot.create_selenium_webdriver(bot.chrome_options)
+        
+        # Try login to instagram again
+        login_ok, login_msg = bot.login()
+        
+        if not login_ok:
+            # Wait until user closes browser
+            DISCONNECTED_MSG = 'Unable to evaluate script: disconnected: not connected to DevTools\n'
+            while True:
+                if bot.driver.get_log('driver')[-1]['message'] == DISCONNECTED_MSG:
+                    print('Browser window closed by user')
+                    break
+                time.sleep(1)
+        
+        # Ensure browser closed
+        bot.close_browser()
     
     # _log("Checking for follow back users.")
     # flag, msg = bot.send_dm_message_who_followed_me(message, delay_time)

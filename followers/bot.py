@@ -27,7 +27,6 @@ from typing import Callable
 ###########################################################################################################################################################
 
 chrome_options = Options()
-chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-notifications")
 chrome_options.add_argument("--disable-popup-blocking")
 chrome_options.add_argument("--disable-gpu")
@@ -53,7 +52,9 @@ def popup(title: str, content: str):
 ###########################################################################################################################################################
 
 class InstagramAutomationBot:
-
+    
+    driver: webdriver.Chrome = None
+    
     instagram_url = "https://www.instagram.com/accounts/login/?"
     instagram_home_url = "https://www.instagram.com/"
     
@@ -75,26 +76,27 @@ class InstagramAutomationBot:
         self._err = _err
         
         self._log("Creating Chrome Driver...")
-        self.driver = self.create_selenium_webdriver()
+        self.chrome_options = chrome_options
 
     ###########################################################################################################################################################
 
     def close_browser(self):
-        self.driver.close()
-        self.driver.quit()
-        self.driver = None
+        if self.driver != None:
+            self.driver.close()
+            self.driver.quit()
+            self.driver = None
         return True
 
     ###########################################################################################################################################################
     
-    def create_selenium_webdriver(self):
+    def create_selenium_webdriver(self, options: Options):
         # creating Chrome web driver object
         capabilities = DesiredCapabilities.CHROME
         self.proxy.add_to_capabilities(capabilities)
         
         driver = webdriver.Chrome(
             ChromeDriverManager().install(),
-            options=chrome_options,
+            options=options,
             desired_capabilities=capabilities
         )
         #driver = webdriver.Chrome(desired_capabilities=capabilities)
@@ -589,21 +591,17 @@ class InstagramAutomationBot:
 
                     message_textarea = self.driver.find_element(By.XPATH, "//textarea[@placeholder='Message...']")
                     ###################################################################################################
-                    # copy the comment text to clipboard
-                    pyperclip.copy(message)
-                    time.sleep(0.5)
-
+                    
                     # type the . to trigger the comment button
                     ActionChains(self.driver).move_to_element(message_textarea).perform()
                     time.sleep(0.5)
                     ActionChains(self.driver).click(message_textarea).perform()
                     time.sleep(0.5)
-                    message_textarea.send_keys(".")
-                    time.sleep(0.3)
-
+                    
                     # paste the comment text from clipboard
-                    message_textarea.send_keys(Keys.CONTROL, 'v')
+                    message_textarea.send_keys(message)
                     time.sleep(random.randint(4, 7))
+                    
                     ###################################################################################################
                 except TimeoutException:
                     self._err("TimeoutException: Page load timeout")
