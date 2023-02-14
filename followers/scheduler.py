@@ -110,6 +110,10 @@ def worker_fun(
             
             bot.close_browser()
             _log("browser closed")
+            
+            # Ignore cookies error
+            if ":cookies_error:" in login_msg:
+                continue
 
             # Launch browser visible
             bot.driver = bot.create_selenium_webdriver(bot.chrome_options)
@@ -117,7 +121,7 @@ def worker_fun(
 
             # Try login to instagram again
             login_ok, login_msg = bot.login()
-
+            
             if not login_ok:
                 _log("waiting until operator closes window")
                 

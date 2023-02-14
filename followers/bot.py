@@ -157,6 +157,7 @@ class InstagramAutomationBot:
     ###########################################################################################################################################################
 
     def login(self):
+        msg_append = ""
         # check if the user is already logged in using cookies or not
         # check if login is successful
         try:
@@ -168,6 +169,7 @@ class InstagramAutomationBot:
             return True, "Instagram login successful using cookies."
         except TimeoutException:
             self._err("Instagram login failed using cookies.")
+            msg_append = ":cookies_failed:"
             self._log("Logging in using username and password...")
 
         self._log("Opening Instagram login page...")
@@ -176,7 +178,7 @@ class InstagramAutomationBot:
             self.driver.get(self.instagram_url)
         except (ConnectionError, MaxRetryError, NewConnectionError, SSLError, ReadTimeout) as e:
             self._err("Connection Error: ", e)
-            return False, "Connection Error"
+            return False, f"Connection Error. {msg_append}"
 
         try:
             # wait the ready state to be complete
@@ -185,7 +187,7 @@ class InstagramAutomationBot:
             )
         except TimeoutException:
             self._err("TimeoutException: Page load timeout")
-            return False, "TimeoutException: Page load timeout"
+            return False, f"TimeoutException: Page load timeout. {msg_append}"
 
         # login to instagram
         try:
@@ -194,7 +196,7 @@ class InstagramAutomationBot:
             )
         except TimeoutException:
             self._err("TimeoutException: Login failed.")
-            return False, "TimeoutException: Login failed."
+            return False, f"TimeoutException: Login failed. {msg_append}"
 
         # send username with delay
         for char in self.username:
@@ -224,16 +226,16 @@ class InstagramAutomationBot:
 
             if error_message.lower().__contains__("There was a problem logging you into Instagram.".lower()):
                 self._err("There was a problem logging you into Instagram. Please try again soon.")
-                return False, "Problem in logging into Instagram. PTA!"
+                return False, f"Problem in logging into Instagram. PTA! {msg_append}"
             elif error_message.lower().__contains__("Sorry, your password was incorrect.".lower()):
                 self._err("Sorry, your password was incorrect. Please double-check your password.")
-                return False, "Sorry, your password was incorrect."
+                return False, f"Sorry, your password was incorrect. {msg_append}"
             elif error_message.lower().__contains__("The username you entered doesn't belong to an account.".lower()):
                 self._err("The username you entered doesn't belong to an account. Please check your username and try again.")
-                return False, "Sorry, your username was incorrect."
+                return False, f"Sorry, your username was incorrect. {msg_append}"
             else:
                 self._err("Login failed.")
-                return False, "Login failed. PTA!"
+                return False, f"Login failed. PTA! {msg_append}"
         except TimeoutException:
             pass
 
@@ -244,7 +246,7 @@ class InstagramAutomationBot:
             )
         except TimeoutException:
             self._err("TimeoutException: Page load timeout")
-            return False, "TimeoutException: Page load timeout"
+            return False, f"TimeoutException: Page load timeout. {msg_append}"
 
         time.sleep(random.randint(2, 4))
 
@@ -270,9 +272,9 @@ class InstagramAutomationBot:
                     )
                 except TimeoutException:
                     self._err("TimeoutException: Page load timeout")
-                    return False, "TimeoutException: Page load timeout"
+                    return False, f"TimeoutException: Page load timeout. {msg_append}"
             else:
-                return False, "Unusual Login Attempt! Need User Attention!"
+                return False, f"Unusual Login Attempt! Need User Attention! {msg_append}"
         except NoSuchElementException:
             pass
 
@@ -322,7 +324,7 @@ class InstagramAutomationBot:
             self._log("Login successful.")
         except TimeoutException:
             self._err("TimeoutException: Login failed.")
-            return False, "Login failed. PTA!"
+            return False, f"Login failed. PTA! {msg_append}"
 
         self._log("Login successful.")
 
