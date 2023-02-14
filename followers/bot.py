@@ -55,13 +55,9 @@ def paste_content(driver: webdriver.Chrome, element, content: str):
     script = '''
         var element = arguments[0];
         var text = arguments[1];
-        var dataTransfer = new DataTransfer();
-        dataTransfer.setData('text', text);
-        var event = new ClipboardEvent('paste', {
-          clipboardData: dataTransfer,
-          bubbles: true
-        });
-        element.dispatchEvent(event);
+        
+        element.value += text;
+        element.dispatchEvent(new Event('change'));
     '''
     driver.execute_script(script, element, content)
 
