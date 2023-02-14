@@ -385,8 +385,8 @@ class InstagramAutomationBot:
                 except NoSuchElementException:
                     try:
                         self.driver.find_element(By.XPATH, "//*[text()='Following']") # check if following
-                        self._log("User: " + user + " is already followed. Removing from list")
-                        return False, "User: " + user + " is already followed"
+                        self._log("User: " + user + " is already followed.")
+                        is_followed = True
                             
                     except:
                         # try if user is requested
@@ -403,91 +403,26 @@ class InstagramAutomationBot:
                 self._err("TimeoutException-2: Follow button not found.")
                 return False, "TimeoutException-2: Follow button not found."
 
-        # # check if the user is private
-        # try:
-        #     #self.driver.find_element(By.XPATH, "//h2[text()='This Account is Private']")
-        #     # check if requested button to determine if its private
-        #     self.driver.find_element(By.XPATH, "//*[text()='Requested']")
-        #     is_private = True
-        #     _log("user is private")
-        # except NoSuchElementException:
-        #     pass
+        if not is_followed:
+            
+            # # check if the user is private
+            # try:
+            #     #self.driver.find_element(By.XPATH, "//h2[text()='This Account is Private']")
+            #     # check if requested button to determine if its private
+            #     self.driver.find_element(By.XPATH, "//*[text()='Requested']")
+            #     is_private = True
+            #     _log("user is private")
+            # except NoSuchElementException:
+            #     pass
 
-        try:
-            # get the follow button
-            follow_button = self.driver.find_element(
-                By.XPATH,
-                "//a[contains(@href, '/followers')]/parent::li/parent::ul/parent::section/div[1]"
-                "//button/div/div[text()='Follow' or text()='follow']"
-            )
-            # click on the follow button
-            follow_button.click()
-            time.sleep(random.randint(8, 15))
-
-            restriction_count = 0
-            while True:
-                # check restrict activity popup
-                try:
-                    self.driver.find_element(By.XPATH, "//div[@role='dialog']//h3/following-sibling::div")
-                    restriction_count += 1
-                except NoSuchElementException:
-                    break
-
-                if restriction_count > 3:
-                    self._log("Restrict activity popup found. Bot is not allowed to follow the user due to "
-                          "Instagram's restrictions.")
-                    self._log("Instagram is restricting the activities. Please try again after few hours.")
-                    self._log("Skipping current account...")
-
-                    return None, "Instagram is restricting the activities."
-
-                try:
-                    self.driver.find_element(By.XPATH, "//div[@role='dialog']//button[text()='OK']").click()
-                    time.sleep(random.randint(2, 4))
-                except:
-                    pass
-
-                self._log("Bot is going to sleep for 1 to 2 minutes.")
-                time.sleep(random.randint(60, 120))
-                self._log("Bot is going to wake up now.")
-                self.driver.refresh()
-                # wait for the page to load
-                try:
-                    WebDriverWait(driver=self.driver, timeout=random.randint(30, 45)).until(
-                        lambda x: x.execute_script("return document.readyState === 'complete'")
-                    )
-                except TimeoutException:
-                    self._err("TimeoutException-3: Page not loaded.")
-                    continue
-
-                self._log("Bot is going to follow the user again.")
-                time.sleep(random.randint(8, 15))
-                # wait for the follow button to be visible
-                try:
-                    # get the follow button
-                    follow_button = self.driver.find_element(
-                        By.XPATH,
-                        "//a[contains(@href, '/followers')]/parent::li/parent::ul/parent::section/div[1]"
-                        "//button/div/div[text()='Follow' or text()='follow']"
-                    )
-                    # click on the follow button
-                    follow_button.click()
-                    time.sleep(random.randint(8, 15))
-                except:
-                    self._err("TimeoutException-4: Follow button not found.")
-                    break
-
-            self._log("Followed the user: " + user)
-            is_followed = True
-            time.sleep(random.randint(25, 40))
-        except NoSuchElementException:
             try:
+                # get the follow button
                 follow_button = self.driver.find_element(
                     By.XPATH,
-                    "//div[contains(text(), 'follower') or contains(text(), 'Follower')]/span/ancestor::ul"
-                    "/parent::section/div[1]//button//div[text()='Follow' or text()='follow' ]"
-                    "/ancestor::button"
+                    "//a[contains(@href, '/followers')]/parent::li/parent::ul/parent::section/div[1]"
+                    "//button/div/div[text()='Follow' or text()='follow']"
                 )
+                # click on the follow button
                 follow_button.click()
                 time.sleep(random.randint(8, 15))
 
@@ -504,13 +439,14 @@ class InstagramAutomationBot:
                         self._log("Restrict activity popup found. Bot is not allowed to follow the user due to "
                               "Instagram's restrictions.")
                         self._log("Instagram is restricting the activities. Please try again after few hours.")
-                        self._log("Exiting the program...")
+                        self._log("Skipping current account...")
 
                         return None, "Instagram is restricting the activities."
+
                     try:
                         self.driver.find_element(By.XPATH, "//div[@role='dialog']//button[text()='OK']").click()
                         time.sleep(random.randint(2, 4))
-                    except Exception:
+                    except:
                         pass
 
                     self._log("Bot is going to sleep for 1 to 2 minutes.")
@@ -523,7 +459,7 @@ class InstagramAutomationBot:
                             lambda x: x.execute_script("return document.readyState === 'complete'")
                         )
                     except TimeoutException:
-                        self._err("TimeoutException-5: Page not loaded.")
+                        self._err("TimeoutException-3: Page not loaded.")
                         continue
 
                     self._log("Bot is going to follow the user again.")
@@ -540,25 +476,92 @@ class InstagramAutomationBot:
                         follow_button.click()
                         time.sleep(random.randint(8, 15))
                     except:
-                        self._err("TimeoutException-6: Follow button not found.")
+                        self._err("TimeoutException-4: Follow button not found.")
                         break
 
                 self._log("Followed the user: " + user)
                 is_followed = True
+                time.sleep(random.randint(25, 40))
             except NoSuchElementException:
-                self._err("NoSuchElementException-7: Follow button not found.")
-                return False, "NoSuchElementException-7: Follow button not found."
+                try:
+                    follow_button = self.driver.find_element(
+                        By.XPATH,
+                        "//div[contains(text(), 'follower') or contains(text(), 'Follower')]/span/ancestor::ul"
+                        "/parent::section/div[1]//button//div[text()='Follow' or text()='follow' ]"
+                        "/ancestor::button"
+                    )
+                    follow_button.click()
+                    time.sleep(random.randint(8, 15))
+
+                    restriction_count = 0
+                    while True:
+                        # check restrict activity popup
+                        try:
+                            self.driver.find_element(By.XPATH, "//div[@role='dialog']//h3/following-sibling::div")
+                            restriction_count += 1
+                        except NoSuchElementException:
+                            break
+
+                        if restriction_count > 3:
+                            self._log("Restrict activity popup found. Bot is not allowed to follow the user due to "
+                                  "Instagram's restrictions.")
+                            self._log("Instagram is restricting the activities. Please try again after few hours.")
+                            self._log("Exiting the program...")
+
+                            return None, "Instagram is restricting the activities."
+                        try:
+                            self.driver.find_element(By.XPATH, "//div[@role='dialog']//button[text()='OK']").click()
+                            time.sleep(random.randint(2, 4))
+                        except Exception:
+                            pass
+
+                        self._log("Bot is going to sleep for 1 to 2 minutes.")
+                        time.sleep(random.randint(60, 120))
+                        self._log("Bot is going to wake up now.")
+                        self.driver.refresh()
+                        # wait for the page to load
+                        try:
+                            WebDriverWait(driver=self.driver, timeout=random.randint(30, 45)).until(
+                                lambda x: x.execute_script("return document.readyState === 'complete'")
+                            )
+                        except TimeoutException:
+                            self._err("TimeoutException-5: Page not loaded.")
+                            continue
+
+                        self._log("Bot is going to follow the user again.")
+                        time.sleep(random.randint(8, 15))
+                        # wait for the follow button to be visible
+                        try:
+                            # get the follow button
+                            follow_button = self.driver.find_element(
+                                By.XPATH,
+                                "//a[contains(@href, '/followers')]/parent::li/parent::ul/parent::section/div[1]"
+                                "//button/div/div[text()='Follow' or text()='follow']"
+                            )
+                            # click on the follow button
+                            follow_button.click()
+                            time.sleep(random.randint(8, 15))
+                        except:
+                            self._err("TimeoutException-6: Follow button not found.")
+                            break
+
+                    self._log("Followed the user: " + user)
+                    is_followed = True
+                except NoSuchElementException:
+                    self._err("NoSuchElementException-7: Follow button not found.")
+                    return False, "NoSuchElementException-7: Follow button not found."
+
+            ##########################################################################################
+            # check if the user is private
+            try:
+                #self.driver.find_element(By.XPATH, "//h2[text()='This Account is Private']")
+                # check if requested button to determine if its private
+                self.driver.find_element(By.XPATH, "//*[text()='Requested']")
+                is_private = True
+                self._log("user is private")
+            except NoSuchElementException:
+                pass
         
-        ##########################################################################################
-        # check if the user is private
-        try:
-            #self.driver.find_element(By.XPATH, "//h2[text()='This Account is Private']")
-            # check if requested button to determine if its private
-            self.driver.find_element(By.XPATH, "//*[text()='Requested']")
-            is_private = True
-            self._log("user is private")
-        except NoSuchElementException:
-            pass
         ##########################################################################################
 
         if is_followed:
