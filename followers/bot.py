@@ -52,17 +52,18 @@ def popup(title: str, content: str):
 ###########################################################################################################################################################
 
 def paste_content(driver: webdriver.Chrome, element, content: str):
-    script = f'''
-        const text = `{content}`;
-        const dataTransfer = new DataTransfer();
+    script = '''
+        var element = arguments[0];
+        var text = arguments[1];
+        var dataTransfer = new DataTransfer();
         dataTransfer.setData('text', text);
-        const event = new ClipboardEvent('paste', {{
+        var event = new ClipboardEvent('paste', {
           clipboardData: dataTransfer,
           bubbles: true
-        }});
-        arguments[0].dispatchEvent(event)
+        });
+        element.dispatchEvent(event);
     '''
-    driver.execute_script(script, element)
+    driver.execute_script(script, element, content)
 
 ###########################################################################################################################################################
 
