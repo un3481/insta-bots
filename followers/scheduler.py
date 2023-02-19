@@ -87,33 +87,44 @@ def worker_fun(
             _err
         )
 
-        # Try to login
+        # Restart Browser if login fails
         while True:
-            # Set headless browser options
-            headless_options = deepcopy(bot.chrome_options)
-            headless_options.add_argument("--headless")
-
-            # Launch browser headless
-            bot.driver = bot.create_selenium_webdriver(headless_options)
-            _log("browser started: headless")
-
-            # login to instagram
-            login_ok, login_msg = bot.login()
-
-            if login_ok:
-                _log("Logged in to account: " + param['username'])
-                _log("")
-                _log("*" * 100)
-                break
-
-            _err(login_msg)
+            # Break outer loop
+            break_out = False
             
-            bot.close_browser()
-            _log("browser closed")
-            
-            # Ignore cookies error
-            if ":cookies_error:" in login_msg:
-                continue
+            # Try to Login 3 times on headless mode
+            login_count = 0
+            while login_count < 3:
+                # Set headless browser options
+                chrome_options = deepcopy(bot.chrome_options)
+                chrome_options.add_argument("--headless")
+
+                # Launch browser headless
+                bot.driver = bot.create_selenium_webdriver(chrome_options)
+                _log("browser started: headless")
+
+                # login to instagram
+                login_ok, login_msg = bot.login()
+
+                if login_ok:
+                    _log("Logged in to account: " + param['username'])
+                    _log("")
+                    _log("*" * 100)
+                    break_out = True
+                    break
+                
+                # Log error 
+                _err(login_msg)
+                
+                # Close browser
+                bot.close_browser()
+                _log("browser closed")
+                
+                # Add count
+                login_count += 1
+                
+            # Break outer loop
+            if break_out: break
 
             # Launch browser visible
             bot.driver = bot.create_selenium_webdriver(bot.chrome_options)
